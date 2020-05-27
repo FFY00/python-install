@@ -40,7 +40,7 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--user', '-u',
                         action='store_true',
                         help='install as user')
-    parser.add_argument('--optimize', '-o', nargs='+', metavar='level',
+    parser.add_argument('--optimize', '-o', nargs='*', metavar='level',
                         type=int, default=[0, 1, 2],
                         help='optimization level(s)')
     parser.add_argument('--destdir', '-d', metavar='/',
