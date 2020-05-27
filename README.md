@@ -4,7 +4,7 @@ A simple, correct PEP427 wheel installer.
 
 ```sh
 $ python -m install -h
-usage: python -m install [-h] [--verbose] [--user] [--optimize [level [level ...]]] [--destdir /] [--cache] [--skip-build] wheel
+usage: python -m install [-h] [--verbose] [--user] [--optimize [level [level ...]]] [--destdir /] [--cache] [--skip-build] [wheel]
 
 positional arguments:
   wheel                 wheel file to install

@@ -31,7 +31,7 @@ def _verbose(msg):  # type: (str) -> None
 if __name__ == '__main__':  # noqa: C901
     sys.argv[0] = 'python -m install'
     parser = argparse.ArgumentParser()
-    parser.add_argument('wheel',
+    parser.add_argument('wheel', nargs='?',
                         type=str,
                         help='wheel file to install')
     parser.add_argument('--verbose', '-v',
@@ -63,6 +63,9 @@ if __name__ == '__main__':  # noqa: C901
 
     if args.cache and args.skip_build:
         _error("--cache and --skip-build can't be used together, choose one")
+
+    if not args.wheel and not args.skip_build:
+        _error('Missing argument: wheel')
 
     if os.path.exists(cache_dir):
         if os.path.isdir(cache_dir):
