@@ -61,6 +61,9 @@ if __name__ == '__main__':  # noqa: C901
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
     entrypoints_cache_dir = os.path.join(cache_dir, 'entrypoints')
 
+    if args.cache and args.skip_build:
+        _error("--cache and --skip-build can't be used together, choose one")
+
     if os.path.exists(cache_dir):
         if os.path.isdir(cache_dir):
             if not args.skip_build:
