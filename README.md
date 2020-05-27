@@ -14,7 +14,7 @@ optional arguments:
   --verbose, -v         enable verbose output
   --user, -u            install as user
   --optimize [level [level ...]], -o [level [level ...]]
-                        optimization level(s)
+                        optimization level(s) (default=0, 1, 2)
   --destdir /, -d /     destination directory
   --cache, -c           generate the installation cache
   --skip-build, -s      skip the cache building step, requires cache to be present already

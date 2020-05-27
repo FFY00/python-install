@@ -42,7 +42,7 @@ if __name__ == '__main__':  # noqa: C901
                         help='install as user')
     parser.add_argument('--optimize', '-o', nargs='*', metavar='level',
                         type=int, default=[0, 1, 2],
-                        help='optimization level(s)')
+                        help='optimization level(s) (default=0, 1, 2)')
     parser.add_argument('--destdir', '-d', metavar='/',
                         type=str, default='/',
                         help='destination directory')
