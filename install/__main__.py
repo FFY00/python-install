@@ -11,16 +11,6 @@ import zipfile
 _VERBOSE = False
 
 
-def _reset_color():  # type: () -> None
-    if sys.stdout.isatty():
-        print('\33[0m', end='')
-
-
-def _verbose_color():  # type: () -> None
-    if sys.stdout.isatty():
-        print('\33[2m', end='')
-
-
 def _error(msg, code=1):  # type: (str, int) -> None
     prefix = 'ERROR'
     if sys.stdout.isatty():
@@ -31,9 +21,11 @@ def _error(msg, code=1):  # type: (str, int) -> None
 
 def _verbose(msg):  # type: (str) -> None
     if _VERBOSE:
-        _verbose_color()
-        print(msg)
-        _reset_color()
+        prefix = suffix = ''
+        if sys.stdout.isatty():
+            prefix = '\33[2m'
+            suffix = '\33[0m'
+        print(prefix + msg + suffix)
 
 
 if __name__ == '__main__':  # noqa: C901
@@ -83,14 +75,9 @@ if __name__ == '__main__':  # noqa: C901
             with zipfile.ZipFile(args.wheel) as wheel:
                 wheel.extractall(pkg_cache_dir)
 
-            quiet = 0 if args.verbose else 1
-
-            _verbose_color()
             for level in args.optimize:
                 _verbose('Optimizing for {}'.format(level))
-                _verbose_color()
-                compileall.compile_dir(pkg_cache_dir, optimize=level, quiet=quiet)
-            _reset_color()
+                compileall.compile_dir(pkg_cache_dir, optimize=level)
 
             # TODO: verify checksums
             # TODO: generate entrypoint scripts
