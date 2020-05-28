@@ -21,7 +21,13 @@ optional arguments:
 
 Missing components:
   - Checksum verification
-  - Entrypoint scripts generation
   - Custom data installation:
     - `headers`
     - `data`
+
+### Bootstraping
+
+`install` has a dependency on `installer`, which is used for entrypoint script
+generation. As we don't install entrypoint scripts, this dependency is not needed
+to install a `install` wheel, making `install` bootstrapable without any
+dependencies.

@@ -6,6 +6,7 @@ python-install - A simple, correct PEP427 wheel installer
 __version__ = '0.0.1'
 
 import compileall
+import configparser
 import logging
 import pickle
 import os
@@ -92,8 +93,10 @@ def parse_name(name):  # type: (str) -> Dict[str, str]
 
 def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) -> None
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
+    scripts_cache_dir = os.path.join(cache_dir, 'scripts')
     wheel_info = parse_name(os.path.basename(wheel))
     dist_info = os.path.join(pkg_cache_dir, '{}-{}.dist-info'.format(wheel_info['distribution'], wheel_info['version']))
+    entrypoints_file = os.path.join(dist_info, 'entry_points.txt')
 
     try:
         with zipfile.ZipFile(wheel) as wheel_zip:
@@ -117,13 +120,31 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     elif optimize:
         compileall.compile_dir(pkg_cache_dir)
 
+    # generate entrypoint scripts
+    if os.path.isfile(entrypoints_file):
+        entrypoints = configparser.ConfigParser()
+        entrypoints.read(entrypoints_file)
+        if 'console_scripts' in entrypoints:
+            if not os.path.exists(scripts_cache_dir):
+                os.mkdir(scripts_cache_dir)
+            try:
+                import installer.scripts
+                for name, backend in entrypoints['console_scripts'].items():
+                    package, call = backend.split(':')
+                    script = installer.scripts.Script(name, package, call, section='console')
+                    name, data = script.build(sys.executable, kind='posix')
+                    with open(os.path.join(scripts_cache_dir, name), 'wb') as f:
+                        f.write(data)
+            except ImportError:
+                import warnings
+                warnings.warn("'installer' package missing, skipping entrypoint script generation", RuntimeWarning)
+
     with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'wb') as f:
         pickle.dump(wheel_info, f)
     with open(os.path.join(cache_dir, 'metadata.pickle'), 'wb') as f:
         pickle.dump(metadata, f)
 
     # TODO: verify checksums
-    # TODO: generate entrypoint scripts
 
     # TODO: replace scripts shebang
     # TODO: validate platform/python tags to make sure it is compatible
