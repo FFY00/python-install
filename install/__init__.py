@@ -105,7 +105,7 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
     if user:
         pkg_dir = site.getusersitepackages()
     else:
-        pkg_dir = destdir_path('purelib')  # TODO: read metadata and use the correct lib
+        pkg_dir = destdir_path('purelib' if metadata['Root-Is-Purelib'] == 'true' else 'platlib')
 
     try:
         if sys.version_info >= (3, 8):
