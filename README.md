@@ -19,3 +19,8 @@ optional arguments:
   --cache, -c           generate the installation cache
   --skip-build, -s      skip the cache building step, requires cache to be present already
 ```
+
+Missing components:
+  - Checksum verification
+  - Entrypoint scripts generation
+  - Custom data installation (`distribution-version.data/`)
