@@ -27,9 +27,9 @@ if sys.version_info < (3,):
 
 _SUPPORTED_WHEEL_VERSION = (1, 0)
 
-_WHEEL_NAME_REGEX = re.compile(r'(?P<distribution>\w+)-(?P<version>[0-9](\.[0-9])+)'
-                               r'(-(?P<build_tag>([0-9]|\w)+))?-(?P<python_tag>py[0-9]+(\.py[0-9]+)*)'
-                               r'-(?P<abi_tag>\w+)-(?P<platform_tag>\w+).whl')
+_WHEEL_NAME_REGEX = re.compile(r'(?P<distribution>.+)-(?P<version>.+)'
+                               r'(-(?P<build_tag>.+))?-(?P<python_tag>.+)'
+                               r'-(?P<abi_tag>.+)-(?P<platform_tag>.+).whl')
 
 logger = logging.getLogger('install')
 
