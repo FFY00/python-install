@@ -20,6 +20,8 @@ python-install - A simple, correct PEP427 wheel installer
 '''
 __version__ = '0.0.1'
 
+_SUPPORTED_WHEEL_VERSION = (1, 0)
+
 _WHEEL_NAME_REGEX = re.compile(r'(?P<distribution>\w+)-(?P<version>[0-9](\.[0-9])+)'
                                r'(-(?P<build_tag>([0-9]|\w)+))?-(?P<python_tag>py[0-9]+(\.py[0-9]+)*)'
                                r'-(?P<abi_tag>\w+)-(?P<platform_tag>\w+).whl')
@@ -75,11 +77,14 @@ def build(wheel, cache_dir, optimize):  # type: (str, str, List[int]) -> None
     except (ValueError, RuntimeError) as e:
         raise InstallException(str(e))
 
+    metadata = _read_wheel_metadata(dist_info)
+
+    if tuple(map(int, metadata['Wheel-Version'].split('.'))) > _SUPPORTED_WHEEL_VERSION:
+        raise InstallException('Unsupported wheel version: {}'.format(metadata['Wheel-Version']))
+
     for level in optimize:
         logger.debug('Optimizing for {}'.format(level))
         compileall.compile_dir(pkg_cache_dir, optimize=level)
-
-    metadata = _read_wheel_metadata(dist_info)
 
     with open(os.path.join(cache_dir, 'metadata.pickle'), 'wb') as f:
         pickle.dump(metadata, f)
