@@ -17,7 +17,7 @@ import sysconfig
 import zipfile
 
 if sys.version_info >= (3, 5):
-    from typing import List, Dict, Optional
+    from typing import List, Dict
 
 
 _SUPPORTED_WHEEL_VERSION = (1, 0)
@@ -55,7 +55,7 @@ def _read_wheel_metadata(dist_info_path):  # type: (str) -> Dict[str, str]
     return metadata
 
 
-def parse_name(name):  # type: (str) -> Optional[Dict[str, str]]
+def parse_name(name):  # type: (str) -> Dict[str, str]
     match = _WHEEL_NAME_REGEX.match(name)
     if not match:
         raise InstallException('Invalid wheel name: {}'.format(name))
