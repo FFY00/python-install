@@ -2,6 +2,7 @@
 
 import compileall
 import logging
+import pickle
 import os
 import re
 import site
@@ -11,7 +12,7 @@ import sysconfig
 import zipfile
 
 if sys.version_info >= (3, 5):
-    from typing import List, Dict, Optional
+    from typing import List, Dict, Optional, TextIO
 
 
 '''
@@ -37,7 +38,22 @@ def _destdir_path(destdir, lib):  # type: (str, str) -> str
     return os.path.join(destdir, os.sep.join(path.split(os.sep)[1:]))
 
 
-def parse_name(name):  # type: (str) -> Dict[str, str]
+def _read_wheel_metadata(dist_info_path):  # type: (str) -> Dict[str, str]
+    metadata = {}
+    try:
+        with open(os.path.join(dist_info_path, 'WHEEL')) as f:
+            for line in f:
+                entry = line.split(':', maxsplit=2)
+                if len(entry) == 2:  # throw error?
+                    metadata[entry[0].strip()] = entry[1].strip()
+    except FileNotFoundError as e:
+        raise InstallException("File '{}' not found".format(e.filename))
+    except PermissionError as e:
+        raise InstallException("{}: '{}' ".format(e.strerror, e.filename))
+    return metadata
+
+
+def parse_name(name):  # type: (str) -> Optional[Dict[str, str]]
     match = _WHEEL_NAME_REGEX.match(name)
     if not match:
         raise InstallException('Invalid wheel name: {}'.format(name))
@@ -46,6 +62,8 @@ def parse_name(name):  # type: (str) -> Dict[str, str]
 
 def build(wheel, cache_dir, optimize):  # type: (str, str, List[int]) -> None
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
+    wheel_info = parse_name(os.path.basename(wheel))
+    dist_info = os.path.join(pkg_cache_dir, '{}-{}.dist-info'.format(wheel_info['distribution'], wheel_info['version']))
 
     try:
         with zipfile.ZipFile(wheel) as wheel_zip:
@@ -61,6 +79,11 @@ def build(wheel, cache_dir, optimize):  # type: (str, str, List[int]) -> None
         logger.debug('Optimizing for {}'.format(level))
         compileall.compile_dir(pkg_cache_dir, optimize=level)
 
+    metadata = _read_wheel_metadata(dist_info)
+
+    with open(os.path.join(cache_dir, 'metadata.pickle'), 'wb') as f:
+        pickle.dump(metadata, f)
+
     # TODO: verify checksums
     # TODO: generate entrypoint scripts
 
@@ -70,6 +93,9 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
 
     def destdir_path(lib):  # type: (str) -> str
         return _destdir_path(destdir, lib)
+
+    with open(os.path.join(cache_dir, 'metadata.pickle'), 'rb') as f:
+        metadata = pickle.load(f)
 
     if user:
         pkg_dir = site.getusersitepackages()
