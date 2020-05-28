@@ -10,7 +10,8 @@ import sys
 import sysconfig
 import zipfile
 
-from typing import List, Dict, Optional
+if sys.version_info >= (3, 5):
+    from typing import List, Dict, Optional
 
 
 '''
