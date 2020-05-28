@@ -147,5 +147,16 @@ def install(cache_dir, destdir):  # type: (str, str) -> None
             target = os.path.join(pkg_cache_dir, lib)
             if os.path.isdir(target):
                 _copy_dir(target, destdir_path(lib))
+        if os.path.isdir(pkg_data_dir):
+            for node in os.listdir(pkg_data_dir):
+                target = os.path.join(pkg_cache_dir, node)
+                if node == 'purelib':
+                    _copy_dir(target, destdir_path('purelib'))
+                if node == 'platlib':
+                    _copy_dir(target, destdir_path('platlib'))
+                if node == 'scripts':
+                    _copy_dir(target, destdir_path('scripts'))
+                # TODO: headers, data -- is this a direct mapping to sysconfig? does it need specific path handling?
+        # TODO: update dist-info/RECORD
     except FileExistsError as e:
         raise InstallException("{}: '{}' ".format(e.strerror, e.filename))

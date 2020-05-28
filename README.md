@@ -22,4 +22,6 @@ optional arguments:
 Missing components:
   - Checksum verification
   - Entrypoint scripts generation
-  - Custom data installation (`distribution-version.data/`)
+  - Custom data installation:
+    - `headers`
+    - `data`
