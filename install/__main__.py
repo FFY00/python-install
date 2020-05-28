@@ -75,43 +75,43 @@ if __name__ == '__main__':  # noqa: C901
         else:
             _error("The cache path ('{}') exists and it's not a directory".format(cache_dir))
 
-    try:
-        # Build cache
-        if not args.skip_build:
+    # Build cache
+    if not args.skip_build:
+        try:
             with zipfile.ZipFile(args.wheel) as wheel:
                 wheel.extractall(pkg_cache_dir)
+        except FileNotFoundError as e:
+            _error("File '{}' not found".format(e.filename))
+        except PermissionError as e:
+            _error("{}: '{}' ".format(e.strerror, e.filename))
+        except (ValueError, RuntimeError) as e:
+            _error(str(e))
 
-            for level in args.optimize:
-                _verbose('Optimizing for {}'.format(level))
-                compileall.compile_dir(pkg_cache_dir, optimize=level)
+        for level in args.optimize:
+            _verbose('Optimizing for {}'.format(level))
+            compileall.compile_dir(pkg_cache_dir, optimize=level)
 
-            # TODO: verify checksums
-            # TODO: generate entrypoint scripts
+        # TODO: verify checksums
+        # TODO: generate entrypoint scripts
 
-        # Install to destination
-        if not args.cache:
-            if not os.path.isdir(cache_dir):
-                _error('Missing installation cache (hint: python -m install --cache [ ... ])')
+    # Install to destination
+    if not args.cache:
+        if not os.path.isdir(cache_dir):
+            _error('Missing installation cache (hint: python -m install --cache [ ... ])')
 
-            if args.user:
-                pkg_dir = site.getusersitepackages()
+        if args.user:
+            pkg_dir = site.getusersitepackages()
+        else:
+            # TODO: allow selecting one of the valid paths?
+            pkg_dir = site.getsitepackages()[0]
+
+        pkg_dir = os.path.join(args.destdir, os.sep.join(pkg_dir.split(os.sep)[1:]))
+
+        try:
+            if sys.version_info >= (3, 8):
+                shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True)
             else:
-                # TODO: allow selecting one of the valid paths?
-                pkg_dir = site.getsitepackages()[0]
-
-            pkg_dir = os.path.join(args.destdir, os.sep.join(pkg_dir.split(os.sep)[1:]))
-
-            try:
-                if sys.version_info >= (3, 8):
-                    shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True)
-                else:
-                    from distutils.dir_util import copy_tree
-                    copy_tree(pkg_cache_dir, pkg_dir)
-            except FileExistsError as e:
-                _error("{}: '{}' ".format(e.strerror, e.filename))
-    except FileNotFoundError as e:
-        _error("File '{}' not found".format(e.filename))
-    except PermissionError as e:
-        _error("{}: '{}' ".format(e.strerror, e.filename))
-    except (ValueError, RuntimeError) as e:
-        _error(str(e))
+                from distutils.dir_util import copy_tree
+                copy_tree(pkg_cache_dir, pkg_dir)
+        except FileExistsError as e:
+            _error("{}: '{}' ".format(e.strerror, e.filename))
