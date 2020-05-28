@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: MIT
 
+'''
+python-install - A simple, correct PEP427 wheel installer
+'''
+__version__ = '0.0.1'
+
 import compileall
 import logging
 import pickle
@@ -14,11 +19,6 @@ import zipfile
 if sys.version_info >= (3, 5):
     from typing import List, Dict, Optional, TextIO
 
-
-'''
-python-install - A simple, correct PEP427 wheel installer
-'''
-__version__ = '0.0.1'
 
 _SUPPORTED_WHEEL_VERSION = (1, 0)
 
