@@ -62,16 +62,27 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
     if user:
         pkg_dir = site.getusersitepackages()
     else:
-        # TODO: allow selecting one of the valid paths?
-        pkg_dir = site.getsitepackages()[0]
-
-    pkg_dir = os.path.join(destdir, os.sep.join(pkg_dir.split(os.sep)[1:]))
+        pkg_dir = destdir_path('purelib')  # TODO: read metadata and use the correct lib
 
     try:
         if sys.version_info >= (3, 8):
-            shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True)
+            shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True, ignore=lambda *_: ['purelib', 'platlib'])
+            for lib in ['purelib', 'platlib']:
+                target = os.path.join(pkg_cache_dir, lib)
+                if os.path.isdir(target):
+                    shutil.copytree(target, destdir_path(lib), dirs_exist_ok=True)
         else:
             from distutils.dir_util import copy_tree
-            copy_tree(pkg_cache_dir, pkg_dir)
+            root = os.path.join(pkg_dir, os.path.basename(pkg_cache_dir))
+            for node in os.listdir(pkg_cache_dir):
+                path = os.path.join(pkg_cache_dir, node)
+                for lib in ['purelib', 'platlib']:
+                    if node == lib:
+                        copy_tree(path, destdir_path(lib))
+                        continue
+                if os.path.isdir(path):
+                    copy_tree(path, root)
+                else:
+                    shutil.copy2(path, root)
     except FileExistsError as e:
         raise InstallException("{}: '{}' ".format(e.strerror, e.filename))
