@@ -16,8 +16,13 @@ import sys
 import sysconfig
 import zipfile
 
-if sys.version_info >= (3, 5):
+if sys.version_info >= (3, 5) or (sys.version_info < (3,) and sys.version_info >= (2, 7)):
     from typing import List, Dict
+
+if sys.version_info < (3,):
+    FileNotFoundError = IOError
+    PermissionError = OSError
+    FileExistsError = OSError
 
 
 _SUPPORTED_WHEEL_VERSION = (1, 0)
@@ -45,7 +50,7 @@ def _read_wheel_metadata(dist_info_path):  # type: (str) -> Dict[str, str]
     try:
         with open(os.path.join(dist_info_path, 'WHEEL')) as f:
             for line in f:
-                entry = line.split(':', maxsplit=2)
+                entry = line.split(':')
                 if len(entry) == 2:  # throw error?
                     metadata[entry[0].strip()] = entry[1].strip()
     except FileNotFoundError as e:
@@ -62,7 +67,7 @@ def parse_name(name):  # type: (str) -> Dict[str, str]
     return match.groupdict()
 
 
-def build(wheel, cache_dir, optimize):  # type: (str, str, List[int]) -> None
+def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) -> None
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
     wheel_info = parse_name(os.path.basename(wheel))
     dist_info = os.path.join(pkg_cache_dir, '{}-{}.dist-info'.format(wheel_info['distribution'], wheel_info['version']))
@@ -82,9 +87,12 @@ def build(wheel, cache_dir, optimize):  # type: (str, str, List[int]) -> None
     if tuple(map(int, metadata['Wheel-Version'].split('.'))) > _SUPPORTED_WHEEL_VERSION:
         raise InstallException('Unsupported wheel version: {}'.format(metadata['Wheel-Version']))
 
-    for level in optimize:
-        logger.debug('Optimizing for {}'.format(level))
-        compileall.compile_dir(pkg_cache_dir, optimize=level)
+    if sys.version_info >= (3,):
+        for level in optimize:
+            logger.debug('Optimizing for {}'.format(level))
+            compileall.compile_dir(pkg_cache_dir, optimize=level)
+    elif optimize:
+        compileall.compile_dir(pkg_cache_dir)
 
     with open(os.path.join(cache_dir, 'metadata.pickle'), 'wb') as f:
         pickle.dump(metadata, f)
