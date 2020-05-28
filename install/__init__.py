@@ -92,6 +92,21 @@ else:
                 shutil.copy2(path, root)
 
 
+def _validate_checksums(dist_info, dir):  # type: (str, str) -> None
+    try:
+        import installer.records
+
+        with open(os.path.join(dist_info, 'RECORD'), 'r') as f:
+            lines = [line.strip() for line in f]
+
+        for record in installer.records.parse_record_file(lines):
+            with open(os.path.join(dir, record.path.as_posix()), 'rb') as fr:
+                if not record.validate(fr.read()):
+                    raise InstallException('Invalid checksum: {}'.format(record))
+    except ImportError:
+        warnings.warn("'installer' package missing, skipping checksum verification", RuntimeWarning)
+
+
 def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
     entrypoints = configparser.ConfigParser()
     entrypoints.read(file)
@@ -227,6 +242,8 @@ def build(wheel, cache_dir, optimize=[0, 1, 2], verify_dependencies=False):  # t
             compileall.compile_dir(pkg_cache_dir, optimize=level)
     elif optimize:
         compileall.compile_dir(pkg_cache_dir)
+
+    _validate_checksums(dist_info, pkg_cache_dir)
 
     if os.path.isfile(entrypoints_file):
         _generate_entrypoint_scripts(entrypoints_file, scripts_cache_dir)
