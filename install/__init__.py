@@ -10,7 +10,6 @@ import logging
 import pickle
 import os
 import re
-import site
 import shutil
 import sys
 import sysconfig
@@ -127,7 +126,7 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     # TODO: generate entrypoint scripts
 
 
-def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None
+def install(cache_dir, destdir):  # type: (str, str) -> None
     def destdir_path(lib):  # type: (str) -> str
         return _destdir_path(destdir, lib)
 
@@ -140,10 +139,7 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None
     pkg_data_dir_name = '{}-{}.data'.format(wheel_info['distribution'], wheel_info['version'])
     pkg_data_dir = os.path.join(cache_dir, pkg_data_dir_name)
 
-    if user:
-        pkg_dir = site.getusersitepackages()
-    else:
-        pkg_dir = destdir_path('purelib' if metadata['Root-Is-Purelib'] == 'true' else 'platlib')
+    pkg_dir = destdir_path('purelib' if metadata['Root-Is-Purelib'] == 'true' else 'platlib')
 
     try:
         _copy_dir(pkg_cache_dir, pkg_dir, ignore=['purelib', 'platlib', pkg_data_dir_name])

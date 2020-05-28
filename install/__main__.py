@@ -29,9 +29,6 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--verbose', '-v',
                         action='store_true',
                         help='enable verbose output')
-    parser.add_argument('--user', '-u',
-                        action='store_true',
-                        help='install as user')
     parser.add_argument('--optimize', '-o', nargs='*', metavar='level',
                         type=int, default=[0, 1, 2],
                         help='optimization level(s) (default=0, 1, 2)')
@@ -81,6 +78,6 @@ if __name__ == '__main__':  # noqa: C901
             _error('Missing installation cache (hint: python -m install --cache [ ... ])')
 
         try:
-            install(cache_dir, args.destdir, args.user)
+            install(cache_dir, args.destdir)
         except InstallException as e:
             _error(str(e))
