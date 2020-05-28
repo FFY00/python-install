@@ -130,7 +130,7 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     elif optimize:
         compileall.compile_dir(pkg_cache_dir)
 
-    if os.path.isfile(file):
+    if os.path.isfile(entrypoints_file):
         _generate_entrypoint_scripts(entrypoints_file, scripts_cache_dir)
 
     with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'wb') as f:
@@ -154,6 +154,7 @@ def install(cache_dir, destdir):  # type: (str, str) -> None
         metadata = pickle.load(f)
 
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
+    scripts_cache_dir = os.path.join(cache_dir, 'scripts')
     pkg_data_dir_name = '{}-{}.data'.format(wheel_info['distribution'], wheel_info['version'])
     pkg_data_dir = os.path.join(cache_dir, pkg_data_dir_name)
 
@@ -174,4 +175,6 @@ def install(cache_dir, destdir):  # type: (str, str) -> None
             if node == 'scripts':
                 _copy_dir(target, destdir_path('scripts'))
             # TODO: headers, data -- is this a direct mapping to sysconfig? does it need specific path handling?
+    if os.path.isdir(scripts_cache_dir):
+        _copy_dir(scripts_cache_dir, destdir_path('scripts'))
     # TODO: update dist-info/RECORD
