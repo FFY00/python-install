@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import sys
+import traceback
 
 from . import build, install, InstallException
 
@@ -71,6 +72,9 @@ if __name__ == '__main__':  # noqa: C901
             build(args.wheel, cache_dir, args.optimize)
         except InstallException as e:
             _error(str(e))
+        except Exception as e:
+            print(traceback.format_exc())
+            _error(str(e))
 
     # Install to destination
     if not args.cache:
@@ -80,4 +84,7 @@ if __name__ == '__main__':  # noqa: C901
         try:
             install(cache_dir, args.destdir)
         except InstallException as e:
+            _error(str(e))
+        except Exception as e:
+            print(traceback.format_exc())
             _error(str(e))

@@ -47,16 +47,11 @@ def _destdir_path(destdir, lib):  # type: (str, str) -> str
 
 def _read_wheel_metadata(dist_info_path):  # type: (str) -> Dict[str, str]
     metadata = {}
-    try:
-        with open(os.path.join(dist_info_path, 'WHEEL')) as f:
-            for line in f:
-                entry = line.split(':')
-                if len(entry) == 2:  # throw error?
-                    metadata[entry[0].strip()] = entry[1].strip()
-    except FileNotFoundError as e:
-        raise InstallException("File '{}' not found".format(e.filename))
-    except PermissionError as e:
-        raise InstallException("{}: '{}' ".format(e.strerror, e.filename))
+    with open(os.path.join(dist_info_path, 'WHEEL')) as f:
+        for line in f:
+            entry = line.split(':')
+            if len(entry) == 2:  # throw error?
+                metadata[entry[0].strip()] = entry[1].strip()
     return metadata
 
 
@@ -98,15 +93,8 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     dist_info = os.path.join(pkg_cache_dir, '{}-{}.dist-info'.format(wheel_info['distribution'], wheel_info['version']))
     entrypoints_file = os.path.join(dist_info, 'entry_points.txt')
 
-    try:
-        with zipfile.ZipFile(wheel) as wheel_zip:
-            wheel_zip.extractall(pkg_cache_dir)
-    except FileNotFoundError as e:
-        raise InstallException("File '{}' not found".format(e.filename))
-    except PermissionError as e:
-        raise InstallException("{}: '{}' ".format(e.strerror, e.filename))
-    except (ValueError, RuntimeError) as e:
-        raise InstallException(str(e))
+    with zipfile.ZipFile(wheel) as wheel_zip:
+        wheel_zip.extractall(pkg_cache_dir)
 
     metadata = _read_wheel_metadata(dist_info)
 
@@ -165,22 +153,19 @@ def install(cache_dir, destdir):  # type: (str, str) -> None
 
     pkg_dir = destdir_path('purelib' if metadata['Root-Is-Purelib'] == 'true' else 'platlib')
 
-    try:
-        _copy_dir(pkg_cache_dir, pkg_dir, ignore=['purelib', 'platlib', pkg_data_dir_name])
-        for lib in ['purelib', 'platlib']:
-            target = os.path.join(pkg_cache_dir, lib)
-            if os.path.isdir(target):
-                _copy_dir(target, destdir_path(lib))
-        if os.path.isdir(pkg_data_dir):
-            for node in os.listdir(pkg_data_dir):
-                target = os.path.join(pkg_cache_dir, node)
-                if node == 'purelib':
-                    _copy_dir(target, destdir_path('purelib'))
-                if node == 'platlib':
-                    _copy_dir(target, destdir_path('platlib'))
-                if node == 'scripts':
-                    _copy_dir(target, destdir_path('scripts'))
-                # TODO: headers, data -- is this a direct mapping to sysconfig? does it need specific path handling?
-        # TODO: update dist-info/RECORD
-    except FileExistsError as e:
-        raise InstallException("{}: '{}' ".format(e.strerror, e.filename))
+    _copy_dir(pkg_cache_dir, pkg_dir, ignore=['purelib', 'platlib', pkg_data_dir_name])
+    for lib in ['purelib', 'platlib']:
+        target = os.path.join(pkg_cache_dir, lib)
+        if os.path.isdir(target):
+            _copy_dir(target, destdir_path(lib))
+    if os.path.isdir(pkg_data_dir):
+        for node in os.listdir(pkg_data_dir):
+            target = os.path.join(pkg_cache_dir, node)
+            if node == 'purelib':
+                _copy_dir(target, destdir_path('purelib'))
+            if node == 'platlib':
+                _copy_dir(target, destdir_path('platlib'))
+            if node == 'scripts':
+                _copy_dir(target, destdir_path('scripts'))
+            # TODO: headers, data -- is this a direct mapping to sysconfig? does it need specific path handling?
+    # TODO: update dist-info/RECORD
