@@ -94,6 +94,8 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     elif optimize:
         compileall.compile_dir(pkg_cache_dir)
 
+    with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'wb') as f:
+        pickle.dump(wheel_info, f)
     with open(os.path.join(cache_dir, 'metadata.pickle'), 'wb') as f:
         pickle.dump(metadata, f)
 
@@ -107,8 +109,13 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
     def destdir_path(lib):  # type: (str) -> str
         return _destdir_path(destdir, lib)
 
+    with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'rb') as f:
+        wheel_info = pickle.load(f)
     with open(os.path.join(cache_dir, 'metadata.pickle'), 'rb') as f:
         metadata = pickle.load(f)
+
+    pkg_data_dir_name = '{}-{}.data'.format(wheel_info['distribution'], wheel_info['version'])
+    pkg_data_dir = os.path.join(cache_dir, pkg_data_dir_name)
 
     if user:
         pkg_dir = site.getusersitepackages()
@@ -117,7 +124,8 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
 
     try:
         if sys.version_info >= (3, 8):
-            shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True, ignore=lambda *_: ['purelib', 'platlib'])
+            shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True,
+                            ignore=lambda *_: ['purelib', 'platlib', pkg_data_dir_name])
             for lib in ['purelib', 'platlib']:
                 target = os.path.join(pkg_cache_dir, lib)
                 if os.path.isdir(target):
@@ -125,12 +133,14 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
         else:
             from distutils.dir_util import copy_tree
             for node in os.listdir(pkg_cache_dir):
-                root = os.path.join(pkg_dir, node)
-                path = os.path.join(pkg_cache_dir, node)
                 for lib in ['purelib', 'platlib']:
                     if node == lib:
                         copy_tree(path, destdir_path(lib))
                         continue
+                root = os.path.join(pkg_dir, node)
+                path = os.path.join(pkg_cache_dir, node)
+                if node == pkg_data_dir_name:
+                    continue
                 if os.path.isdir(path):
                     copy_tree(path, root)
                 else:
