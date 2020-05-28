@@ -3,13 +3,14 @@
 import compileall
 import logging
 import os
+import re
 import site
 import shutil
 import sys
 import sysconfig
 import zipfile
 
-from typing import List
+from typing import List, Dict, Optional
 
 
 '''
@@ -17,6 +18,9 @@ python-install - A simple, correct PEP427 wheel installer
 '''
 __version__ = '0.0.1'
 
+_WHEEL_NAME_REGEX = re.compile(r'(?P<distribution>\w+)-(?P<version>[0-9](\.[0-9])+)'
+                               r'(-(?P<build_tag>([0-9]|\w)+))?-(?P<python_tag>py[0-9]+(\.py[0-9]+)*)'
+                               r'-(?P<abi_tag>\w+)-(?P<platform_tag>\w+).whl')
 
 logger = logging.getLogger('install')
 
@@ -30,6 +34,13 @@ def _destdir_path(destdir, lib):  # type: (str, str) -> str
     if not path:
         raise InstallException("Couldn't find {}".format(lib))
     return os.path.join(destdir, os.sep.join(path.split(os.sep)[1:]))
+
+
+def parse_name(name):  # type: (str) -> Dict[str, str]
+    match = _WHEEL_NAME_REGEX.match(name)
+    if not match:
+        raise InstallException('Invalid wheel name: {}'.format(name))
+    return match.groupdict()
 
 
 def build(wheel, cache_dir, optimize):  # type: (str, str, List[int]) -> None
