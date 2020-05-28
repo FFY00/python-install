@@ -104,8 +104,6 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
 
 
 def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  # noqa: C901
-    pkg_cache_dir = os.path.join(cache_dir, 'pkg')
-
     def destdir_path(lib):  # type: (str) -> str
         return _destdir_path(destdir, lib)
 
@@ -114,6 +112,7 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
     with open(os.path.join(cache_dir, 'metadata.pickle'), 'rb') as f:
         metadata = pickle.load(f)
 
+    pkg_cache_dir = os.path.join(cache_dir, 'pkg')
     pkg_data_dir_name = '{}-{}.data'.format(wheel_info['distribution'], wheel_info['version'])
     pkg_data_dir = os.path.join(cache_dir, pkg_data_dir_name)
 
