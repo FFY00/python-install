@@ -60,6 +60,30 @@ def _read_wheel_metadata(dist_info_path):  # type: (str) -> Dict[str, str]
     return metadata
 
 
+def _copy_dir_new(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
+    shutil.copytree(src, dst, dirs_exist_ok=True, ignore=lambda *_: ignore)
+
+
+def _copy_dir_old(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
+    from distutils.dir_util import copy_tree
+    for node in os.listdir(src):
+        if node in ignore:
+            continue
+        path = os.path.join(src, node)
+        root = os.path.join(dst, node)
+        if os.path.isdir(path):
+            copy_tree(path, root)
+        else:
+            shutil.copy2(path, root)
+
+
+def _copy_dir(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
+    if sys.version_info >= (3, 8):
+        _copy_dir_new(src, dst, ignore)
+    else:
+        _copy_dir_old(src, dst, ignore)
+
+
 def parse_name(name):  # type: (str) -> Dict[str, str]
     match = _WHEEL_NAME_REGEX.match(name)
     if not match:
@@ -103,7 +127,7 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     # TODO: generate entrypoint scripts
 
 
-def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  # noqa: C901
+def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None
     def destdir_path(lib):  # type: (str) -> str
         return _destdir_path(destdir, lib)
 
@@ -122,27 +146,10 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
         pkg_dir = destdir_path('purelib' if metadata['Root-Is-Purelib'] == 'true' else 'platlib')
 
     try:
-        if sys.version_info >= (3, 8):
-            shutil.copytree(pkg_cache_dir, pkg_dir, dirs_exist_ok=True,
-                            ignore=lambda *_: ['purelib', 'platlib', pkg_data_dir_name])
-            for lib in ['purelib', 'platlib']:
-                target = os.path.join(pkg_cache_dir, lib)
-                if os.path.isdir(target):
-                    shutil.copytree(target, destdir_path(lib), dirs_exist_ok=True)
-        else:
-            from distutils.dir_util import copy_tree
-            for node in os.listdir(pkg_cache_dir):
-                for lib in ['purelib', 'platlib']:
-                    if node == lib:
-                        copy_tree(path, destdir_path(lib))
-                        continue
-                root = os.path.join(pkg_dir, node)
-                path = os.path.join(pkg_cache_dir, node)
-                if node == pkg_data_dir_name:
-                    continue
-                if os.path.isdir(path):
-                    copy_tree(path, root)
-                else:
-                    shutil.copy2(path, root)
+        _copy_dir(pkg_cache_dir, pkg_dir, ignore=['purelib', 'platlib', pkg_data_dir_name])
+        for lib in ['purelib', 'platlib']:
+            target = os.path.join(pkg_cache_dir, lib)
+            if os.path.isdir(target):
+                _copy_dir(target, destdir_path(lib))
     except FileExistsError as e:
         raise InstallException("{}: '{}' ".format(e.strerror, e.filename))
