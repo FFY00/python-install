@@ -17,7 +17,7 @@ import sysconfig
 import zipfile
 
 if sys.version_info >= (3, 5):
-    from typing import List, Dict, Optional, TextIO
+    from typing import List, Dict, Optional
 
 
 _SUPPORTED_WHEEL_VERSION = (1, 0)
