@@ -79,6 +79,28 @@ def _copy_dir(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
         _copy_dir_old(src, dst, ignore)
 
 
+def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
+    entrypoints = configparser.ConfigParser()
+    entrypoints.read(file)
+    if 'console_scripts' in entrypoints:
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+        try:
+            import installer.scripts
+
+            for name, backend in entrypoints['console_scripts'].items():
+                package, call = backend.split(':')
+
+                script = installer.scripts.Script(name, package, call, section='console')
+                name, data = script.build(sys.executable, kind='posix')
+
+                with open(os.path.join(dir, name), 'wb') as f:
+                    f.write(data)
+        except ImportError:
+            import warnings
+            warnings.warn("'installer' package missing, skipping entrypoint script generation", RuntimeWarning)
+
+
 def parse_name(name):  # type: (str) -> Dict[str, str]
     match = _WHEEL_NAME_REGEX.match(name)
     if not match:
@@ -108,24 +130,8 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     elif optimize:
         compileall.compile_dir(pkg_cache_dir)
 
-    # generate entrypoint scripts
-    if os.path.isfile(entrypoints_file):
-        entrypoints = configparser.ConfigParser()
-        entrypoints.read(entrypoints_file)
-        if 'console_scripts' in entrypoints:
-            if not os.path.exists(scripts_cache_dir):
-                os.mkdir(scripts_cache_dir)
-            try:
-                import installer.scripts
-                for name, backend in entrypoints['console_scripts'].items():
-                    package, call = backend.split(':')
-                    script = installer.scripts.Script(name, package, call, section='console')
-                    name, data = script.build(sys.executable, kind='posix')
-                    with open(os.path.join(scripts_cache_dir, name), 'wb') as f:
-                        f.write(data)
-            except ImportError:
-                import warnings
-                warnings.warn("'installer' package missing, skipping entrypoint script generation", RuntimeWarning)
+    if os.path.isfile(file):
+        _generate_entrypoint_scripts(entrypoints_file, scripts_cache_dir)
 
     with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'wb') as f:
         pickle.dump(wheel_info, f)
