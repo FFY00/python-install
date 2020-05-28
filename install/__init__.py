@@ -125,6 +125,9 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     # TODO: verify checksums
     # TODO: generate entrypoint scripts
 
+    # TODO: replace scripts shebang
+    # TODO: validate platform/python tags to make sure it is compatible
+
 
 def install(cache_dir, destdir):  # type: (str, str) -> None
     def destdir_path(lib):  # type: (str) -> str
