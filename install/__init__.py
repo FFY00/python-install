@@ -124,8 +124,8 @@ def install(cache_dir, destdir, user=False):  # type: (str, str, bool) -> None  
                     shutil.copytree(target, destdir_path(lib), dirs_exist_ok=True)
         else:
             from distutils.dir_util import copy_tree
-            root = os.path.join(pkg_dir, os.path.basename(pkg_cache_dir))
             for node in os.listdir(pkg_cache_dir):
+                root = os.path.join(pkg_dir, node)
                 path = os.path.join(pkg_cache_dir, node)
                 for lib in ['purelib', 'platlib']:
                     if node == lib:
