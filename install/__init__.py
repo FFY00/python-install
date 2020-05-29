@@ -55,28 +55,24 @@ def _read_wheel_metadata(dist_info_path):  # type: (str) -> Dict[str, str]
     return metadata
 
 
-def _copy_dir_new(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
-    shutil.copytree(src, dst, dirs_exist_ok=True, ignore=lambda *_: ignore)
+if sys.version_info >= (3, 8):
 
+    def _copy_dir(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
+        shutil.copytree(src, dst, dirs_exist_ok=True, ignore=lambda *_: ignore)
 
-def _copy_dir_old(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
-    from distutils.dir_util import copy_tree
-    for node in os.listdir(src):
-        if node in ignore:
-            continue
-        path = os.path.join(src, node)
-        root = os.path.join(dst, node)
-        if os.path.isdir(path):
-            copy_tree(path, root)
-        else:
-            shutil.copy2(path, root)
+else:
 
-
-def _copy_dir(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
-    if sys.version_info >= (3, 8):
-        _copy_dir_new(src, dst, ignore)
-    else:
-        _copy_dir_old(src, dst, ignore)
+    def _copy_dir(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
+        from distutils.dir_util import copy_tree
+        for node in os.listdir(src):
+            if node in ignore:
+                continue
+            path = os.path.join(src, node)
+            root = os.path.join(dst, node)
+            if os.path.isdir(path):
+                copy_tree(path, root)
+            else:
+                shutil.copy2(path, root)
 
 
 def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
