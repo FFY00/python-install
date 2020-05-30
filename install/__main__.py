@@ -1,16 +1,45 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import print_function
+
 import argparse
 import logging
 import os
 import shutil
 import sys
+import warnings
 import traceback
+import typing
 
-from . import build, install, InstallException
+from typing import Optional, TextIO
+
+if False:  # TYPE_CHECKING
+    from typing import Type  # not in 3.5.{0,1}
+
+from . import build, install, InstallException, IncompleteInstallationWarning
 
 
 logger = logging.getLogger('install.main')
+
+
+def _showwarning(message, category, filename, lineno, file=None, line=None):
+    # type: (str, Type[Warning], str, int, Optional[TextIO], Optional[str]) -> None
+    prefix = 'WARNING'
+    where = '{}:{}'.format(filename, lineno)
+    name = '({})'.format(category.__name__)
+    if sys.stdout.isatty():
+        prefix = '\33[93m' + prefix + '\33[0m'
+        where = '\33[2m' + where + '\33[0m'
+        name = '\33[33m\33[7m' + name + '\33[0m'
+    if not file:
+        if sys.version_info >= (3,):
+            file = sys.stderr
+        else:
+            file = typing.cast(TextIO, sys.stderr)
+    print('{} {} {} {}'.format(prefix, where, name, message), file=file)
+
+
+warnings.showwarning = _showwarning
 
 
 def _error(msg, code=1):  # type: (str, int) -> None
