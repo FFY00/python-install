@@ -14,6 +14,7 @@ import re
 import shutil
 import sys
 import sysconfig
+import warnings
 import zipfile
 
 if sys.version_info >= (3, 5) or (sys.version_info < (3,) and sys.version_info >= (2, 7)):
@@ -32,6 +33,17 @@ _WHEEL_NAME_REGEX = re.compile(r'(?P<distribution>.+)-(?P<version>.+)'
                                r'-(?P<abi_tag>.+)-(?P<platform_tag>.+).whl')
 
 logger = logging.getLogger('install')
+
+
+class IncompleteInstallationWarning(RuntimeWarning):
+    '''
+    Some installation step was not handled, potentially resulting in an
+    incomplete instalation
+    '''
+
+
+class InstallWarning(RuntimeWarning):
+    pass
 
 
 class InstallException(Exception):
@@ -93,8 +105,7 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
                 with open(os.path.join(dir, name), 'wb') as f:
                     f.write(data)
         except ImportError:
-            import warnings
-            warnings.warn("'installer' package missing, skipping entrypoint script generation", RuntimeWarning)
+            warnings.warn("'installer' package missing, skipping entrypoint script generation", IncompleteInstallationWarning)
 
 
 def parse_name(name):  # type: (str) -> Dict[str, str]
@@ -138,6 +149,7 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
 
     # TODO: replace scripts shebang
     # TODO: validate platform/python tags to make sure it is compatible
+    warnings.warn('Platform/Python tags were not verified for compatibity, make sure the wheel is compatible', InstallWarning)
 
 
 def install(cache_dir, destdir):  # type: (str, str) -> None
@@ -171,6 +183,9 @@ def install(cache_dir, destdir):  # type: (str, str) -> None
             if node == 'scripts':
                 _copy_dir(target, destdir_path('scripts'))
             # TODO: headers, data -- is this a direct mapping to sysconfig? does it need specific path handling?
+            else:
+                warnings.warn('Unhandled data folder: {}'.format(node), IncompleteInstallationWarning)
+
     if os.path.isdir(scripts_cache_dir):
         _copy_dir(scripts_cache_dir, destdir_path('scripts'))
     # TODO: update dist-info/RECORD
