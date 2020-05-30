@@ -72,10 +72,17 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--skip-build', '-s',
                         action='store_true',
                         help='skip the cache building step, requires cache to be present already')
+    # warnings
+    parser.add_argument('--ignore-incomplete-installation-warnings', '-w',
+                        action='store_true',
+                        help='stop treating incomplete installation warnings as errors')
     args = parser.parse_args()
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+
+    if not args.ignore_incomplete_installation_warnings:
+        warnings.simplefilter('error', IncompleteInstallationWarning)
 
     cache_dir = '.install-cache'
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')

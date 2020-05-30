@@ -4,7 +4,7 @@ A simple, correct PEP427 wheel installer.
 
 ```sh
 $ python -m install -h
-usage: python -m install [-h] [--verbose] [--optimize [level [level ...]]] [--destdir /] [--cache] [--skip-build] [wheel]
+usage: python -m install [-h] [--verbose] [--optimize [level [level ...]]] [--destdir /] [--cache] [--skip-build] [--ignore-incomplete-installation-warnings] [wheel]
 
 positional arguments:
   wheel                 wheel file to install
@@ -17,6 +17,8 @@ optional arguments:
   --destdir /, -d /     destination directory
   --cache, -c           generate the installation cache
   --skip-build, -s      skip the cache building step, requires cache to be present already
+  --ignore-incomplete-installation-warnings, -w
+                        stop treating incomplete installation warnings as errors
 ```
 
 Missing components:
