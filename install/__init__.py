@@ -8,8 +8,8 @@ __version__ = '0.0.1'
 import compileall
 import configparser
 import logging
-import pickle
 import os
+import pickle
 import re
 import shutil
 import sys

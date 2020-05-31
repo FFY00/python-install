@@ -7,16 +7,19 @@ import logging
 import os
 import shutil
 import sys
-import warnings
 import traceback
 import typing
+import warnings
 
 from typing import Optional, TextIO
 
+# isort:maintain_block
 if False:  # TYPE_CHECKING
     from typing import Type  # not in 3.5.{0,1}
+# isort:end_maintain_block
 
-from . import build, install, InstallException, IncompleteInstallationWarning
+
+from . import IncompleteInstallationWarning, InstallException, build, install  # isort:skip # until isort 5.0.0
 
 
 logger = logging.getLogger('install.main')
