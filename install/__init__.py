@@ -18,7 +18,7 @@ import warnings
 import zipfile
 
 if sys.version_info >= (3, 5) or (sys.version_info < (3,) and sys.version_info >= (2, 7)):
-    from typing import List, Dict
+    from typing import Any, List, Dict
 
 if sys.version_info < (3,):
     FileNotFoundError = IOError
@@ -108,6 +108,16 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
             warnings.warn("'installer' package missing, skipping entrypoint script generation", IncompleteInstallationWarning)
 
 
+def _save_pickle(dir, name, data):  # type: (str, str, Any) -> None
+    with open(os.path.join(dir, name + '.pickle'), 'wb') as f:
+        pickle.dump(data, f)
+
+
+def _load_pickle(dir, name):  # type: (str, str) -> Any
+    with open(os.path.join(dir, name + '.pickle'), 'rb') as f:
+        return pickle.load(f)
+
+
 def parse_name(name):  # type: (str) -> Dict[str, str]
     match = _WHEEL_NAME_REGEX.match(name)
     if not match:
@@ -140,10 +150,8 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     if os.path.isfile(entrypoints_file):
         _generate_entrypoint_scripts(entrypoints_file, scripts_cache_dir)
 
-    with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'wb') as f:
-        pickle.dump(wheel_info, f)
-    with open(os.path.join(cache_dir, 'metadata.pickle'), 'wb') as f:
-        pickle.dump(metadata, f)
+    _save_pickle(cache_dir, 'wheel-info', wheel_info)
+    _save_pickle(cache_dir, 'metadata', metadata)
 
     # TODO: verify checksums
 
@@ -156,10 +164,8 @@ def install(cache_dir, destdir):  # type: (str, str) -> None
     def destdir_path(lib):  # type: (str) -> str
         return _destdir_path(destdir, lib)
 
-    with open(os.path.join(cache_dir, 'wheel-info.pickle'), 'rb') as f:
-        wheel_info = pickle.load(f)
-    with open(os.path.join(cache_dir, 'metadata.pickle'), 'rb') as f:
-        metadata = pickle.load(f)
+    wheel_info = _load_pickle(cache_dir, 'wheel-info')
+    metadata = _load_pickle(cache_dir, 'metadata')
 
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
     scripts_cache_dir = os.path.join(cache_dir, 'scripts')
