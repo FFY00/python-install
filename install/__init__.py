@@ -91,6 +91,7 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
     entrypoints = configparser.ConfigParser()
     entrypoints.read(file)
     if 'console_scripts' in entrypoints:
+        '''
         if not os.path.exists(dir):
             os.mkdir(dir)
         try:
@@ -105,7 +106,8 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
                 with open(os.path.join(dir, name), 'wb') as f:
                     f.write(data)
         except ImportError:
-            warnings.warn("'installer' package missing, skipping entrypoint script generation", IncompleteInstallationWarning)
+        '''
+        warnings.warn("entrypoint script generation is not supported", IncompleteInstallationWarning)
 
 
 def _save_pickle(dir, name, data):  # type: (str, str, Any) -> None
