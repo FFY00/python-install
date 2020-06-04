@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: MIT
 
-'''
-python-install - A simple, correct PEP427 wheel installer
-'''
-__version__ = '0.0.1'
+from __future__ import print_function
 
 import compileall
 import configparser
+import fileinput
 import logging
 import os
 import pickle
@@ -16,6 +14,12 @@ import sys
 import sysconfig
 import warnings
 import zipfile
+
+'''
+python-install - A simple, correct PEP427 wheel installer
+'''
+__version__ = '0.0.1'
+
 
 if sys.version_info >= (3, 5) or (sys.version_info < (3,) and sys.version_info >= (2, 7)):
     from typing import Any, List, Dict
@@ -108,6 +112,21 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
             warnings.warn("'installer' package missing, skipping entrypoint script generation", IncompleteInstallationWarning)
 
 
+def _replace_shebang(dir, interpreter):  # type: (str, str) -> None
+    for script in os.listdir(dir):
+        target = os.path.join(dir, script)
+        if os.path.isfile(target):
+            # Python 2 does not support fileinput as a contex manager
+            f = fileinput.input(target, inplace=True)
+            for line in f:
+                if f.isfirstline():
+                    line = re.sub(r'^#!python', '#!{}'.format(interpreter), line)
+                print(line, end='')
+            f.close()
+        else:
+            raise InstallException('Script is not a file: {}'.format(script))
+
+
 def _save_pickle(dir, name, data):  # type: (str, str, Any) -> None
     with open(os.path.join(dir, name + '.pickle'), 'wb') as f:
         pickle.dump(data, f)
@@ -129,8 +148,10 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
     scripts_cache_dir = os.path.join(cache_dir, 'scripts')
     wheel_info = parse_name(os.path.basename(wheel))
-    dist_info = os.path.join(pkg_cache_dir, '{}-{}.dist-info'.format(wheel_info['distribution'], wheel_info['version']))
+    package = '{}-{}'.format(wheel_info['distribution'], wheel_info['version'])
+    dist_info = os.path.join(pkg_cache_dir, '{}.dist-info'.format(package))
     entrypoints_file = os.path.join(dist_info, 'entry_points.txt')
+    scripts_dir = os.path.join(pkg_cache_dir, '{}.data'.format(package), 'scripts')
 
     with zipfile.ZipFile(wheel) as wheel_zip:
         wheel_zip.extractall(pkg_cache_dir)
@@ -150,12 +171,14 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     if os.path.isfile(entrypoints_file):
         _generate_entrypoint_scripts(entrypoints_file, scripts_cache_dir)
 
+    if os.path.isdir(scripts_dir):
+        _replace_shebang(scripts_dir, sys.executable)
+
     _save_pickle(cache_dir, 'wheel-info', wheel_info)
     _save_pickle(cache_dir, 'metadata', metadata)
 
     # TODO: verify checksums
 
-    # TODO: replace scripts shebang
     # TODO: validate platform/python tags to make sure it is compatible
     warnings.warn('Platform/Python tags were not verified for compatibity, make sure the wheel is compatible', InstallWarning)
 
