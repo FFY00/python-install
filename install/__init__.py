@@ -113,18 +113,19 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
 
 
 def _replace_shebang(dir, interpreter):  # type: (str, str) -> None
-    for script in os.listdir(dir):
-        target = os.path.join(dir, script)
-        if os.path.isfile(target):
-            # Python 2 does not support fileinput as a contex manager
-            f = fileinput.input(target, inplace=True)
-            for line in f:
-                if f.isfirstline():
-                    line = re.sub(r'^#!python', '#!{}'.format(interpreter), line)
-                print(line, end='')
-            f.close()
-        else:
+    scripts = [os.path.join(dir, script) for script in os.listdir(dir)]
+
+    for script in scripts:
+        if not os.path.isfile(script):
             raise InstallException('Script is not a file: {}'.format(script))
+
+    # Python 2 does not support fileinput as a contex manager
+    f = fileinput.input(scripts, inplace=True)
+    for line in f:
+        if f.isfirstline():
+            line = re.sub(r'^#!python', '#!{}'.format(interpreter), line)
+        print(line, end='')
+    f.close()
 
 
 def _save_pickle(dir, name, data):  # type: (str, str, Any) -> None
