@@ -8,6 +8,7 @@ import fileinput
 import logging
 import os
 import pickle
+import platform
 import re
 import shutil
 import sys
@@ -160,12 +161,20 @@ def _check_requirement(requirement_string):  # type: (str) -> bool
 
 def _verify_compability(dir, verify_dependencies=False):  # type: (str, bool) -> None
     try:
+        import packaging.specifiers
+
         if sys.version_info >= (3, 8):
             from importlib import metadata as importlib_metadata
         else:
             import importlib_metadata
 
         dist = importlib_metadata.Distribution.at(dir)
+
+        py_ver = dist.metadata['Requires-Python']
+        if py_ver:
+            py_spec = packaging.specifiers.Specifier(py_ver)
+            if platform.python_version() in py_spec:
+                raise InstallException('Imcopatible python version, needed: {}'.format(py_ver))
 
         if verify_dependencies:
             for req in dist.metadata.get_all('Requires-Dist') or []:
