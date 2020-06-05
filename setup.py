@@ -20,5 +20,11 @@ setup(
     packages=['install'],
     requires=[
         'installer',
-    ]
+    ],
+    extras_require={
+        'dependency-checking': [
+            'packaging',
+            'importlib-metadata; python_version < "3.8"',
+        ],
+    }
 )

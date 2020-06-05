@@ -16,3 +16,9 @@ classifiers = [
 requires = [
     'installer'
 ]
+
+[tool.flit.metadata.requires-extra]
+depenency-checking = [
+    'packaging',
+    'importlib-metadata; python_version < "3.8"',
+]
