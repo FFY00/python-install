@@ -128,6 +128,54 @@ def _replace_shebang(dir, interpreter):  # type: (str, str) -> None
     f.close()
 
 
+def _check_requirement(requirement_string):  # type: (str) -> bool
+    import packaging.requirements
+
+    if sys.version_info >= (3, 8):
+        from importlib import metadata as importlib_metadata
+    else:
+        import importlib_metadata
+
+    req = packaging.requirements.Requirement(requirement_string)
+
+    if req.marker and not req.marker.evaluate():
+        return True
+
+    try:
+        version = importlib_metadata.version(req.name)
+        metadata = importlib_metadata.metadata(req.name)
+    except importlib_metadata.PackageNotFoundError:
+        return False
+
+    metadata_extras = metadata.get_all('Provides-Extra') or []
+    for extra in req.extras:
+        if extra not in metadata_extras:
+            return False
+
+    if req.specifier:
+        return req.specifier.contains(version)
+
+    return True
+
+
+def _verify_compability(dir, verify_dependencies=False):  # type: (str, bool) -> None
+    try:
+        if sys.version_info >= (3, 8):
+            from importlib import metadata as importlib_metadata
+        else:
+            import importlib_metadata
+
+        dist = importlib_metadata.Distribution.at(dir)
+
+        if verify_dependencies:
+            for req in dist.metadata.get_all('Requires-Dist') or []:
+                if not _check_requirement(req):
+                    raise InstallException('Missing dependency: {}'.format(req))
+
+    except ImportError as e:
+        warnings.warn('{}: Platform/Python tags were not verified for compatibity'.format(e), InstallWarning)
+
+
 def _save_pickle(dir, name, data):  # type: (str, str, Any) -> None
     with open(os.path.join(dir, name + '.pickle'), 'wb') as f:
         pickle.dump(data, f)
@@ -145,7 +193,7 @@ def parse_name(name):  # type: (str) -> Dict[str, str]
     return match.groupdict()
 
 
-def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) -> None
+def build(wheel, cache_dir, optimize=[0, 1, 2], verify_dependencies=False):  # type: (str, str, List[int], bool) -> None
     pkg_cache_dir = os.path.join(cache_dir, 'pkg')
     scripts_cache_dir = os.path.join(cache_dir, 'scripts')
     wheel_info = parse_name(os.path.basename(wheel))
@@ -161,6 +209,8 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
 
     if tuple(map(int, metadata['Wheel-Version'].split('.'))) > _SUPPORTED_WHEEL_VERSION:
         raise InstallException('Unsupported wheel version: {}'.format(metadata['Wheel-Version']))
+
+    _verify_compability(dist_info, verify_dependencies)
 
     if sys.version_info >= (3,):
         for level in optimize:
@@ -179,9 +229,6 @@ def build(wheel, cache_dir, optimize=[0, 1, 2]):  # type: (str, str, List[int]) 
     _save_pickle(cache_dir, 'metadata', metadata)
 
     # TODO: verify checksums
-
-    # TODO: validate platform/python tags to make sure it is compatible
-    warnings.warn('Platform/Python tags were not verified for compatibity, make sure the wheel is compatible', InstallWarning)
 
 
 def install(cache_dir, destdir):  # type: (str, str) -> None

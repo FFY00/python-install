@@ -68,6 +68,9 @@ if __name__ == '__main__':  # noqa: C901
     parser.add_argument('--destdir', '-d', metavar='/',
                         type=str, default='/',
                         help='destination directory')
+    parser.add_argument('--verify-dependencies', '-t',
+                        action='store_true',
+                        help='check if the dependencies are met')
     # build/install separation
     parser.add_argument('--cache', '-c',
                         action='store_true',
@@ -108,7 +111,7 @@ if __name__ == '__main__':  # noqa: C901
     # Build cache
     if not args.skip_build:
         try:
-            build(args.wheel, cache_dir, args.optimize)
+            build(args.wheel, cache_dir, args.optimize, args.verify_dependencies)
         except InstallException as e:
             _error(str(e))
         except Exception as e:
