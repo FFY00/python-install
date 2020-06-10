@@ -9,6 +9,7 @@ import logging
 import os
 import pickle
 import platform
+import py_compile
 import re
 import shutil
 import sys
@@ -224,7 +225,11 @@ def build(wheel, cache_dir, optimize=[0, 1, 2], verify_dependencies=False):  # t
     if sys.version_info >= (3,):
         for level in optimize:
             logger.debug('Optimizing for {}'.format(level))
-            compileall.compile_dir(pkg_cache_dir, optimize=level)
+            if sys.version_info >= (3, 7):
+                compileall.compile_dir(pkg_cache_dir, optimize=level,
+                                       invalidation_mode=py_compile.PycInvalidationMode.CHECKED_HASH)
+            else:
+                compileall.compile_dir(pkg_cache_dir, optimize=level)
     elif optimize:
         compileall.compile_dir(pkg_cache_dir)
 
