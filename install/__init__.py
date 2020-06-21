@@ -173,9 +173,11 @@ def _verify_compability(dir, verify_dependencies=False):  # type: (str, bool) ->
 
         py_ver = dist.metadata['Requires-Python']
         if py_ver:
-            py_spec = packaging.specifiers.Specifier(py_ver)
-            if platform.python_version() in py_spec:
-                raise InstallException('Imcopatible python version, needed: {}'.format(py_ver))
+            py_vers = py_ver.split(',')
+            for ver in py_vers:
+                py_spec = packaging.specifiers.Specifier(ver)
+                if platform.python_version() not in py_spec:
+                    raise InstallException('Incompatible python version, needed: {}'.format(py_ver))
 
         if verify_dependencies:
             for req in dist.metadata.get_all('Requires-Dist') or []:
