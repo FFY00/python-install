@@ -185,7 +185,7 @@ def _verify_compability(dir, verify_dependencies=False):  # type: (str, bool) ->
                     raise InstallException('Missing dependency: {}'.format(req))
 
     except ImportError as e:
-        warnings.warn('{}: Platform/Python tags were not verified for compatibity'.format(e), InstallWarning)
+        warnings.warn('{}: Platform/Python tags were not verified for compatibility'.format(e), InstallWarning)
 
 
 def _save_pickle(dir, name, data):  # type: (str, str, Any) -> None
