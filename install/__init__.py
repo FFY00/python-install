@@ -24,7 +24,7 @@ __version__ = '0.0.1'
 
 
 if sys.version_info >= (3, 5) or (sys.version_info < (3,) and sys.version_info >= (2, 7)):
-    from typing import Any, List, Dict
+    from typing import Any, Dict, List
 
 if sys.version_info < (3,):
     FileNotFoundError = IOError
