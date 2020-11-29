@@ -17,7 +17,7 @@ import sysconfig
 import warnings
 import zipfile
 
-import install._vendor
+import install._vendor as _vendor  # noqa: F401
 
 
 '''
