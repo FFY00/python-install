@@ -17,6 +17,8 @@ import sysconfig
 import warnings
 import zipfile
 
+import install._vendor
+
 '''
 python-install - A simple, correct PEP427 wheel installer
 '''
@@ -99,19 +101,17 @@ def _generate_entrypoint_scripts(file, dir):  # type: (str, str) -> None
     if 'console_scripts' in entrypoints:
         if not os.path.exists(dir):
             os.mkdir(dir)
-        try:
-            import installer.scripts
 
-            for name, backend in entrypoints['console_scripts'].items():
-                package, call = backend.split(':')
+        import installer.scripts
 
-                script = installer.scripts.Script(name, package, call, section='console')
-                name, data = script.build(sys.executable, kind='posix')
+        for name, backend in entrypoints['console_scripts'].items():
+            package, call = backend.split(':')
 
-                with open(os.path.join(dir, name), 'wb') as f:
-                    f.write(data)
-        except ImportError:
-            warnings.warn("'installer' package missing, skipping entrypoint script generation", IncompleteInstallationWarning)
+            script = installer.scripts.Script(name, package, call, section='console')
+            name, data = script.generate(sys.executable, kind='posix')
+
+            with open(os.path.join(dir, name), 'wb') as f:
+                f.write(data)
 
 
 def _replace_shebang(dir, interpreter):  # type: (str, str) -> None

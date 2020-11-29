@@ -19,6 +19,7 @@ setup(
     ],
     packages=[
         'install',
+        'install._vendor',
         'install._vendor.installer.src.installer',
         'install._vendor.installer.src.installer._compat',
         'install._vendor.installer.src.installer._scripts',
