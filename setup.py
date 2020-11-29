@@ -17,9 +17,11 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3'
     ],
-    packages=['install'],
-    requires=[
-        'installer',
+    packages=[
+        'install',
+        'install._vendor.installer.src.installer',
+        'install._vendor.installer.src.installer._compat',
+        'install._vendor.installer.src.installer._scripts',
     ],
     extras_require={
         'dependency-checking': [
