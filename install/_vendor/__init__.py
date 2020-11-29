@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-import sys
 import os.path
+import sys
 
 
 sys.path.insert(0, os.path.abspath(

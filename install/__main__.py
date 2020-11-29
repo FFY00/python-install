@@ -13,6 +13,7 @@ import warnings
 
 from typing import Optional, TextIO
 
+
 # isort:maintain_block
 if False:  # TYPE_CHECKING
     from typing import Type  # not in 3.5.{0,1}
