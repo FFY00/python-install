@@ -1,0 +1,3 @@
+[submodule "install/_vendor/installer"]
+	path = install/_vendor/installer
+	url = https://github.com/pradyunsg/installer.git
