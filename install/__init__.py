@@ -23,7 +23,7 @@ import install._vendor as _vendor  # noqa: F401
 '''
 python-install - A simple, correct PEP427 wheel installer
 '''
-__version__ = '0.0.1'
+__version__ = '0.0.3'
 
 
 if sys.version_info >= (3, 5) or (sys.version_info < (3,) and sys.version_info >= (2, 7)):
