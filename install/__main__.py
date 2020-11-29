@@ -11,7 +11,7 @@ import traceback
 import typing
 import warnings
 
-from typing import Optional, TextIO
+from typing import Optional, TextIO, Union
 
 
 # isort:maintain_block
@@ -27,7 +27,7 @@ logger = logging.getLogger('install.main')
 
 
 def _showwarning(message, category, filename, lineno, file=None, line=None):
-    # type: (str, Type[Warning], str, int, Optional[TextIO], Optional[str]) -> None
+    # type: (Union[Warning, str], Type[Warning], str, int, Optional[TextIO], Optional[str]) -> None
     prefix = 'WARNING'
     where = '{}:{}'.format(filename, lineno)
     name = '({})'.format(category.__name__)
