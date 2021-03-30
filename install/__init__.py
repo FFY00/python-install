@@ -84,6 +84,8 @@ if sys.version_info >= (3, 8):
 else:
 
     def _copy_dir(src, dst, ignore=[]):  # type: (str, str, List[str]) -> None
+        if not os.path.exists(dst):
+            os.makedirs(dst)
         from distutils.dir_util import copy_tree
         for node in os.listdir(src):
             if node in ignore:
